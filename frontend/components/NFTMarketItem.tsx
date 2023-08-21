@@ -10,7 +10,7 @@ import { useAccount } from "wagmi";
 import { getContract } from "viem";
 import contractAddresses from "../contracts/contract-address.json";
 import { createWalletClient, createPublicClient, http } from "viem";
-import { lineaTestnet, polygonMumbai } from "viem/chains";
+import { lineaTestnet } from "viem/chains";
 import { getNetwork } from "@wagmi/core";
 
 const { chain, chains } = getNetwork();
@@ -36,21 +36,18 @@ export default function NFTListed({ tokenID }: Props) {
   const { address, isConnected, isDisconnected } = useAccount();
 
   const publicClient = createPublicClient({
-    chain: chain?.id === 59140 ? lineaTestnet : polygonMumbai,
+    chain: lineaTestnet,
     transport: http(),
   });
 
   const walletClient = createWalletClient({
-    chain: chain?.id === 59140 ? lineaTestnet : polygonMumbai,
+    chain: lineaTestnet,
     transport: http(),
     account: address,
   });
 
   const contract = getContract({
-    address:
-      chain?.id === 59140
-        ? "0x0853212Dab358161dd4a9c497D75555Ec5DE3129"
-        : "0xCd210F50C3b17eA5bBA945c2e936a8A7eB17D9A5",
+    address:"0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
     abi: NFTVogueArtifact.abi,
     publicClient,
     walletClient,
@@ -160,18 +157,12 @@ export default function NFTListed({ tokenID }: Props) {
 
     setPurchaseProgress(true);
     const task = writeContract({
-      address:
-        chain?.id === 59140
-          ? "0x0853212Dab358161dd4a9c497D75555Ec5DE3129"
-          : "0xCd210F50C3b17eA5bBA945c2e936a8A7eB17D9A5",
+      address: "0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
       abi: NFTVogueArtifact.abi,
       functionName: "purchase",
       args: [tokenID, tokenListedData.price],
     });
-    // const task = contract.purchase(tokenID, {
-    //   value: tokenListedData.price,
-    //   gasLimit: 5000000,
-    // });
+    
     toast
       .promise(task, {
         pending: "Purchasing NFT...",
@@ -217,9 +208,9 @@ export default function NFTListed({ tokenID }: Props) {
           )}
 
           {tokenListedData && tokenListedData[0] && !purchased && (
-            <div className="text-white py-1">
+            <div className="dark:text-white py-1">
               Listed for {ethers.utils.formatEther(tokenListedData[1])}{" "}
-              Linea_Testnet
+              $Linea_Testnet
             </div>
           )}
 
@@ -229,7 +220,7 @@ export default function NFTListed({ tokenID }: Props) {
             </div>
           )}
           {tokenListedData &&
-            tokenListedData.isListed &&
+            tokenListedData[0]&&
             tokenOwnerAddress &&
             !sameOwner &&
             !purchased && (

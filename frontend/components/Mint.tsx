@@ -176,10 +176,7 @@ export default function Mint() {
     const URI = cid;
 
     const task = writeContract({
-      address:
-        chain?.id === 59140
-          ? "0x0853212Dab358161dd4a9c497D75555Ec5DE3129"
-          : "0xCd210F50C3b17eA5bBA945c2e936a8A7eB17D9A5",
+      address:"0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
       abi: NFTVogueArtifact.abi,
       functionName: "safeMint",
       args: [address, URI],

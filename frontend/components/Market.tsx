@@ -112,7 +112,7 @@ export default function Market() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mx-5">
         {marketData.map((nft) => (
           // console.log(nft)
-          <NFTMarketItem key={nft as Key} tokenID={nft} />
+          <NFTMarketItem key={1} tokenID={nft} />
         ))}
       </div>
     </div>

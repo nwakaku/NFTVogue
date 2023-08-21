@@ -40,21 +40,18 @@ export default function NFTOwned({ tokenID }: Props) {
   const { address, isConnected, isDisconnected } = useAccount();
 
   const publicClient = createPublicClient({
-    chain: chain?.id === 59140 ? lineaTestnet : polygonMumbai,
+    chain: lineaTestnet,
     transport: http(),
   });
 
   const walletClient = createWalletClient({
-    chain: chain?.id === 59140 ? lineaTestnet : polygonMumbai,
+    chain: lineaTestnet,
     transport: http(),
     account: address,
   });
 
   const contract = getContract({
-    address:
-      chain?.id === 59140
-        ? "0x0853212Dab358161dd4a9c497D75555Ec5DE3129"
-        : "0xCd210F50C3b17eA5bBA945c2e936a8A7eB17D9A5",
+    address: "0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
     abi: NFTVogueArtifact.abi,
     publicClient,
     walletClient,
@@ -139,10 +136,7 @@ export default function NFTOwned({ tokenID }: Props) {
     setListProgress(true);
     setPrice(data.price);
     const task = writeContract({
-      address:
-        chain?.id === 59140
-          ? "0x0853212Dab358161dd4a9c497D75555Ec5DE3129"
-          : "0xCd210F50C3b17eA5bBA945c2e936a8A7eB17D9A5",
+      address: "0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
       abi: NFTVogueArtifact.abi,
       functionName: "listNFT",
       args: [tokenID, ethers.utils.parseUnits(data.price.toString(), "ether")],

@@ -2,36 +2,31 @@ import { ConnectionContext } from "@/pages/_app";
 import axios from "axios";
 import { BigNumber, ethers } from "ethers";
 import { useContext, useEffect, useState } from "react";
-import { Web3Storage } from "web3.storage";
+import { Web3Storage } from 'web3.storage';
 import { getContract } from "viem";
 import NFTVogueArtifact from "../contracts/NFTVogue.json";
 import contractAddresses from "../contracts/contract-address.json";
 import { createWalletClient, createPublicClient, http } from "viem";
-import { lineaTestnet, polygonMumbai } from "viem/chains";
+import { lineaTestnet } from "viem/chains";
 import { useAccount } from "wagmi";
+import { writeContract } from '@wagmi/core'
 
-import { getNetwork } from "@wagmi/core";
-
-const { chain, chains } = getNetwork();
 
 const publicClient = createPublicClient({
-  chain: chain?.id === 59140 ? lineaTestnet : polygonMumbai,
+  chain: lineaTestnet,
   transport: http(),
 });
 
 const walletClient = createWalletClient({
-  chain: chain?.id === 59140 ? lineaTestnet : polygonMumbai,
+  chain: lineaTestnet,
   transport: http(),
 });
 
 const contract = getContract({
-  address:
-    chain?.id === 59140
-      ? "0x0853212Dab358161dd4a9c497D75555Ec5DE3129"
-      : "0xCd210F50C3b17eA5bBA945c2e936a8A7eB17D9A5",
+  address: "0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
   abi: NFTVogueArtifact.abi,
   publicClient,
-  walletClient,
+  walletClient
 });
 
 interface Props {
@@ -44,17 +39,22 @@ type ListedDetail = [boolean, BigNumber, string] & {
   lastOwner: string;
 };
 
-function getAccessToken() {
-  return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDkyQmMzYmEyNEMwNzIyZUZkODg5NmIzOGQxYzI5ZWE0RUFiMjdiMjkiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2ODY0NjQzNjk1NjIsIm5hbWUiOiJmb3IgbmZ0YWkifQ.dyN1087A0XVpl12LBrjON3fxQLgQrRcAXpAW25YZ0IU";
+
+function getAccessToken () {
+  
+  return "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweDkyQmMzYmEyNEMwNzIyZUZkODg5NmIzOGQxYzI5ZWE0RUFiMjdiMjkiLCJpc3MiOiJ3ZWIzLXN0b3JhZ2UiLCJpYXQiOjE2ODY0NjQzNjk1NjIsIm5hbWUiOiJmb3IgbmZ0YWkifQ.dyN1087A0XVpl12LBrjON3fxQLgQrRcAXpAW25YZ0IU"
 }
 
-function makeStorageClient() {
-  return new Web3Storage({ token: getAccessToken() });
+function makeStorageClient () {
+  return new Web3Storage({ token: getAccessToken() })
 }
+
+
 
 export default function NFTOwned({ tokenID }: Props) {
   // const { connected, address, contract } = useContext(ConnectionContext);
   const { address, isConnected, isDisconnected } = useAccount();
+
 
   const [tokenMetaData, setTokenMetaData] = useState<any>(null);
   const [tokenListedData, setTokenListedData] = useState<ListedDetail | null>(
@@ -63,24 +63,26 @@ export default function NFTOwned({ tokenID }: Props) {
   const [tokenInfoLoading, setTokenInfoLoading] = useState(false);
   const [tokenInfoError, setTokenInfoError] = useState<any>(null);
 
-  async function retrieve(url: string): Promise<void> {
-    const client = makeStorageClient();
-    try {
-      const res = await client.get(url);
 
-      if (res) {
-        const files = await res.files();
-        for (const file of files) {
-          console.log(`${file.cid} -- ${file.size}`);
-          setTokenMetaData(`https://dweb.link/ipfs/${file.cid}`);
-        }
-      } else {
-        throw new Error(`Failed to get ${url}`);
+   async function retrieve(url: string): Promise<void> {
+  const client = makeStorageClient();
+  try {
+    const res = await client.get(url);
+
+    if (res) {
+      const files = await res.files();
+      for (const file of files) {
+        console.log(`${file.cid} -- ${file.size}`);
+        setTokenMetaData(`https://dweb.link/ipfs/${file.cid}`)
       }
-    } catch (error) {
-      console.error(error);
+    } else {
+      throw new Error(`Failed to get ${url}`);
     }
+  } catch (error) {
+    console.error(error);
   }
+}
+
 
   useEffect(() => {
     if (!isConnected || !address || !contract) {
@@ -136,13 +138,13 @@ export default function NFTOwned({ tokenID }: Props) {
 
         <div className="my-2">
           {tokenListedData &&
-            (console.log(tokenListedData),
-            (
-              <div className="text-white">
+            
+             (console.log(tokenListedData),
+              <div className="dark:text-white">
                 Listed for {ethers.utils.formatEther(tokenListedData[1])}{" "}
                 $Linea_Testnet
               </div>
-            ))}
+            )}
         </div>
       </div>
     </div>
