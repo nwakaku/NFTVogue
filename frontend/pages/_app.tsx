@@ -9,38 +9,6 @@ import NFTVogueArtifact from "../contracts/NFTVogue.json";
 import contractAddresses from "../contracts/contract-address.json";
 import { ethers } from "ethers";
 import { Nifta } from "@/contracts/typechain-types";
-import "@rainbow-me/rainbowkit/styles.css";
-import { getDefaultWallets, RainbowKitProvider } from "@rainbow-me/rainbowkit";
-import { configureChains, createConfig, WagmiConfig } from "wagmi";
-import { polygonMumbai, lineaTestnet } from "wagmi/chains";
-import { alchemyProvider } from "wagmi/providers/alchemy";
-import { publicProvider } from "wagmi/providers/public";
-import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
-
-// checkout this
-const { chains, publicClient } = configureChains(
-  [polygonMumbai, lineaTestnet],
-  [
-    jsonRpcProvider({
-      rpc: () => ({ http: "https://polygon-mumbai.infura.io/v3/45ffec7b43da456f9b80b94e7d4257d5" }),
-    }),
-    publicProvider(),
-  ]
-);
-
-const { connectors } = getDefaultWallets({
-  appName: "aiBuidl",
-  projectId: "b5f0ef4632f1502fb2c4f1a85225fa31",
-  chains,
-});
-
-const wagmiConfig = createConfig({
-  autoConnect: true,
-  connectors,
-  publicClient,
-});
-
-// and this
 
 declare global {
   interface Window {
@@ -88,51 +56,51 @@ export default function App({ Component, pageProps }: AppProps) {
     setContract(contract);
   };
 
-  // useEffect(() => {
-  //   // Check if MetaMask is installed
-  //   // MetaMask injects the global API into window.ethereum
-  //   if (window.ethereum) {
-  //     window.ethereum
-  //       .request({
-  //         method: "wallet_switchEthereumChain",
-  //         params: [{ chainId: "e704" }], // chainId must be in hexadecimal numbers
-  //       })
-  //       .catch((error: any) => {
-  //         if (error.code === 4902) {
-  //           window.ethereum
-  //             .request({
-  //               method: "wallet_addEthereumChain",
-  //               params: [
-  //                 {
-  //                   chainId: "e704",
-  //                   rpcUrl:
-  //                     "https://linea-goerli.infura.io/v3/45ffec7b43da456f9b80b94e7d4257d5",
-  //                 },
-  //               ],
-  //             })
-  //             .catch((addError: any) => {
-  //               console.error(addError);
-  //             });
-  //         } else {
-  //           console.error(error);
-  //         }
-  //       });
+  useEffect(() => {
+    // Check if MetaMask is installed
+    // MetaMask injects the global API into window.ethereum
+    if (window.ethereum) {
+      window.ethereum
+        .request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "e704" }], // chainId must be in hexadecimal numbers
+        })
+        .catch((error: any) => {
+          if (error.code === 4902) {
+            window.ethereum
+              .request({
+                method: "wallet_addEthereumChain",
+                params: [
+                  {
+                    chainId: "e704",
+                    rpcUrl:
+                      "https://linea-goerli.infura.io/v3/45ffec7b43da456f9b80b94e7d4257d5",
+                  },
+                ],
+              })
+              .catch((addError: any) => {
+                console.error(addError);
+              });
+          } else {
+            console.error(error);
+          }
+        });
 
-  //     window.ethereum.on("accountsChanged", (accounts: string[]) => {
-  //       if (accounts.length === 0) {
-  //         setConnected(false);
-  //       } else {
-  //         setConnected(true);
-  //         setAddress(accounts[0]);
-  //       }
-  //     });
-  //   } else {
-  //     // if no window.ethereum then MetaMask is not installed
-  //     alert(
-  //       "MetaMask is not installed. Please consider installing it: https://metamask.io/download.html"
-  //     );
-  //   }
-  // }, []);
+      window.ethereum.on("accountsChanged", (accounts: string[]) => {
+        if (accounts.length === 0) {
+          setConnected(false);
+        } else {
+          setConnected(true);
+          setAddress(accounts[0]);
+        }
+      });
+    } else {
+      // if no window.ethereum then MetaMask is not installed
+      alert(
+        "MetaMask is not installed. Please consider installing it: https://metamask.io/download.html"
+      );
+    }
+  }, []);
 
   // here react context is defined and used
   const connectionContextData: ConnectionContextType = {
@@ -155,15 +123,11 @@ export default function App({ Component, pageProps }: AppProps) {
       </Head>
       <ToastContainer />
 
-      <WagmiConfig config={wagmiConfig}>
-        <RainbowKitProvider chains={chains}>
-        {/* <ConnectionContext.Provider value={connectionContextData}> */}
-          <Layout>
-            <Component {...pageProps} />
-          </Layout>
-        {/* </ConnectionContext.Provider> */}
-        </RainbowKitProvider>
-      </WagmiConfig>
+      <ConnectionContext.Provider value={connectionContextData}>
+        <Layout>
+          <Component {...pageProps} />
+        </Layout>
+      </ConnectionContext.Provider>
     </>
   );
 }

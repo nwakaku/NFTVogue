@@ -7,18 +7,6 @@ import Link from "next/link";
 import axios from "axios";
 import { Web3Storage } from "web3.storage";
 import Image from "next/image";
-import { getContract } from "viem";
-import NFTVogueArtifact from "../contracts/NFTVogue.json";
-import contractAddresses from "../contracts/contract-address.json";
-import { createWalletClient, createPublicClient, http } from "viem";
-import { lineaTestnet } from "viem/chains";
-import { useAccount } from "wagmi";
-import { writeContract } from "@wagmi/core";
-import { getNetwork } from "@wagmi/core";
-
-
-const { chain, chains } = getNetwork();
-
 
 type PromptForm = {
   prompt: string;
@@ -39,8 +27,6 @@ function convertUriDataToFile(
 }
 
 export default function Mint() {
-  const { address, isConnected, isDisconnected } = useAccount();
-
   const {
     register,
     handleSubmit,
@@ -62,7 +48,7 @@ export default function Mint() {
   const [generatedImage3, setGeneratedImage3] = useState("");
   const [generatedImage4, setGeneratedImage4] = useState("");
   const [generateProgress, setGenerateProgress] = useState(0);
-  // const { connected, address, contract } = useContext(ConnectionContext);
+  const { connected, address, contract } = useContext(ConnectionContext);
 
   const onSubmit = (data: PromptForm) => {
     setMintingStatus("idle");
@@ -143,7 +129,7 @@ export default function Mint() {
   };
 
   const mintNFT = async () => {
-    if (!isConnected || !address) {
+    if (!connected || !address || !contract) {
       toast.error("Please connect your wallet first");
       return;
     }
@@ -175,14 +161,11 @@ export default function Mint() {
 
     const URI = cid;
 
-    const task = writeContract({
-      address:"0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
-      abi: NFTVogueArtifact.abi,
-      functionName: "safeMint",
-      args: [address, URI],
-    });
-
-    // const task = contract.write.safeMint([address, URI]);
+    const task = contract
+      .safeMint(address, URI, {
+        gasLimit: 5000000,
+      })
+      .then((tx) => tx.wait());
     toast
       .promise(task, {
         pending: "Minting NFT...",

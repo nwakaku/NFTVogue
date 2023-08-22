@@ -6,43 +6,8 @@ import NFTMarketItem from "./NFTMarketItem";
 import { BigNumber } from "ethers";
 import BounceLoader from "react-spinners/BounceLoader";
 
-import { writeContract } from "@wagmi/core";
-import NFTVogueArtifact from "../contracts/NFTVogue.json";
-import { useAccount } from "wagmi";
-import { getContract } from "viem";
-import contractAddresses from "../contracts/contract-address.json";
-import { createWalletClient, createPublicClient, http } from "viem";
-import { lineaTestnet, polygonMumbai } from "viem/chains";
-import { Key } from "swr";
-import { getNetwork } from "@wagmi/core";
-
-const { chain, chains } = getNetwork();
-console.log(chain);
-
 export default function Market() {
-  // const { connected, address, contract } = useContext(ConnectionContext);
-  const { address, isConnected, isDisconnected } = useAccount();
-
-  const publicClient = createPublicClient({
-    chain: chain?.id === 59140 ? lineaTestnet : polygonMumbai,
-    transport: http(),
-  });
-
-  const walletClient = createWalletClient({
-    chain: chain?.id === 59140 ? lineaTestnet : polygonMumbai,
-    transport: http(),
-    account: address,
-  });
-
-  const contract = getContract({
-    address:
-      chain?.id === 59140
-        ? "0x0853212Dab358161dd4a9c497D75555Ec5DE3129"
-        : "0xCd210F50C3b17eA5bBA945c2e936a8A7eB17D9A5",
-    abi: NFTVogueArtifact.abi,
-    publicClient,
-    walletClient,
-  });
+  const { connected, address, contract } = useContext(ConnectionContext);
 
   const [refresh, setRefresh] = useState(1);
 
@@ -52,7 +17,7 @@ export default function Market() {
     }
     setMarketLoading(true);
     try {
-      const data = (await contract.read.getNFTsListedForSale()) as BigNumber[];
+      const data = await contract.getNFTsListedForSale();
       console.log(data);
       setMarketData(data);
     } catch (e) {
@@ -63,13 +28,10 @@ export default function Market() {
   };
 
   useEffect(() => {
-
-    if (isConnected && contract) {
+    if (connected && contract) {
       marketFetcher();
     }
-  }, [address, refresh, chain]);
-
-
+  }, [address, refresh]);
 
   const [marketData, setMarketData] = useState<BigNumber[]>([]);
   const [marketError, setMarketError] = useState<any>(null);
@@ -110,9 +72,9 @@ export default function Market() {
         </button>
       </div>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mx-5">
-        {marketData.map((nft) => (
+        {marketData?.map((nft) => (
           // console.log(nft)
-          <NFTMarketItem key={1} tokenID={nft} />
+          <NFTMarketItem key={nft.toNumber()} tokenID={nft} />
         ))}
       </div>
     </div>

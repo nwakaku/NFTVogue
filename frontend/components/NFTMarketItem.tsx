@@ -4,16 +4,6 @@ import { BigNumber, ethers } from "ethers";
 import { useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { Web3Storage } from "web3.storage";
-import { writeContract } from "@wagmi/core";
-import NFTVogueArtifact from "../contracts/NFTVogue.json";
-import { useAccount } from "wagmi";
-import { getContract } from "viem";
-import contractAddresses from "../contracts/contract-address.json";
-import { createWalletClient, createPublicClient, http } from "viem";
-import { lineaTestnet } from "viem/chains";
-import { getNetwork } from "@wagmi/core";
-
-const { chain, chains } = getNetwork();
 
 interface Props {
   tokenID: BigNumber;
@@ -33,27 +23,7 @@ function makeStorageClient() {
 }
 
 export default function NFTListed({ tokenID }: Props) {
-  const { address, isConnected, isDisconnected } = useAccount();
-
-  const publicClient = createPublicClient({
-    chain: lineaTestnet,
-    transport: http(),
-  });
-
-  const walletClient = createWalletClient({
-    chain: lineaTestnet,
-    transport: http(),
-    account: address,
-  });
-
-  const contract = getContract({
-    address:"0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
-    abi: NFTVogueArtifact.abi,
-    publicClient,
-    walletClient,
-  });
-
-  // const { connected, address, contract } = useContext(ConnectionContext);
+  const { connected, address, contract } = useContext(ConnectionContext);
   const [purchaseProgress, setPurchaseProgress] = useState(false);
   const [purchased, setPurchased] = useState(false);
 
@@ -95,29 +65,21 @@ export default function NFTListed({ tokenID }: Props) {
   );
   useEffect(() => {
     const tokenDetailsFetcher = async () => {
-      if (!isConnected || !address) {
+      if (!connected || !address || !contract) {
         return;
       }
 
       settokenListedDataLoading(true);
-      // const { hash } = await writeContract({
-      //   address: '0xecb504d39723b0be0e3a9aa33d646642d1051ee1',
-      //   abi: wagmigotchiABI,
-      //   functionName: 'feed',
-      //   args: [],
-      // })
-      const uri = await contract.read.tokenURI([tokenID]);
+      const uri = await contract.tokenURI(tokenID);
       console.log(uri);
 
       try {
-        retrieve(uri as string);
+        retrieve(uri);
 
-        const info = (await contract.read.nftDetails([
-          tokenID,
-        ])) as ListedDetail;
+        const info = await contract.nftDetails(tokenID);
         settokenListedData(info);
 
-        settokenOwnerAddress(info[2]);
+        settokenOwnerAddress(info.lastOwner);
       } catch (error) {
         settokenListedDataError(error);
       } finally {
@@ -130,7 +92,7 @@ export default function NFTListed({ tokenID }: Props) {
     }
   }, [address, tokenID, purchaseProgress]);
 
-  if (!isConnected || !address || !contract) {
+  if (!connected || !address || !contract) {
     return <></>;
   }
 
@@ -151,18 +113,15 @@ export default function NFTListed({ tokenID }: Props) {
   }
 
   const onBuy = () => {
-    if (!isConnected || !address || !contract || !tokenListedData) {
+    if (!connected || !address || !contract || !tokenListedData) {
       return;
     }
 
     setPurchaseProgress(true);
-    const task = writeContract({
-      address: "0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
-      abi: NFTVogueArtifact.abi,
-      functionName: "purchase",
-      args: [tokenID, tokenListedData.price],
+    const task = contract.purchase(tokenID, {
+      value: tokenListedData.price,
+      gasLimit: 5000000,
     });
-    
     toast
       .promise(task, {
         pending: "Purchasing NFT...",
@@ -193,7 +152,7 @@ export default function NFTListed({ tokenID }: Props) {
       <div className="px-5 pb-5">
         <a href="#">
           <h5 className="text-md font-semibold tracking-tight text-gray-900 dark:text-white">
-            UMN #{tokenID.toString()}
+            UMN #{tokenID.toNumber()}
           </h5>
         </a>
 
@@ -207,10 +166,9 @@ export default function NFTListed({ tokenID }: Props) {
             </>
           )}
 
-          {tokenListedData && tokenListedData[0] && !purchased && (
-            <div className="dark:text-white py-1">
-              Listed for {ethers.utils.formatEther(tokenListedData[1])}{" "}
-              $Linea_Testnet
+          {tokenListedData && tokenListedData.isListed && !purchased && (
+            <div className="text-white py-1">
+              Listed for {ethers.utils.formatEther(tokenListedData.price)} $Linea
             </div>
           )}
 
@@ -220,7 +178,7 @@ export default function NFTListed({ tokenID }: Props) {
             </div>
           )}
           {tokenListedData &&
-            tokenListedData[0]&&
+            tokenListedData.isListed &&
             tokenOwnerAddress &&
             !sameOwner &&
             !purchased && (

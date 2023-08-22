@@ -3,31 +3,7 @@ import axios from "axios";
 import { BigNumber, ethers } from "ethers";
 import { useContext, useEffect, useState } from "react";
 import { Web3Storage } from 'web3.storage';
-import { getContract } from "viem";
-import NFTVogueArtifact from "../contracts/NFTVogue.json";
-import contractAddresses from "../contracts/contract-address.json";
-import { createWalletClient, createPublicClient, http } from "viem";
-import { lineaTestnet } from "viem/chains";
-import { useAccount } from "wagmi";
-import { writeContract } from '@wagmi/core'
 
-
-const publicClient = createPublicClient({
-  chain: lineaTestnet,
-  transport: http(),
-});
-
-const walletClient = createWalletClient({
-  chain: lineaTestnet,
-  transport: http(),
-});
-
-const contract = getContract({
-  address: "0x0853212Dab358161dd4a9c497D75555Ec5DE3129",
-  abi: NFTVogueArtifact.abi,
-  publicClient,
-  walletClient
-});
 
 interface Props {
   tokenID: BigNumber;
@@ -52,8 +28,8 @@ function makeStorageClient () {
 
 
 export default function NFTOwned({ tokenID }: Props) {
-  // const { connected, address, contract } = useContext(ConnectionContext);
-  const { address, isConnected, isDisconnected } = useAccount();
+  const { connected, address, contract } = useContext(ConnectionContext);
+  // const { address, isConnected, isDisconnected } = useAccount();
 
 
   const [tokenMetaData, setTokenMetaData] = useState<any>(null);
@@ -84,33 +60,32 @@ export default function NFTOwned({ tokenID }: Props) {
 }
 
 
-  useEffect(() => {
-    if (!isConnected || !address || !contract) {
-      return;
-    }
-    const tokenDetailsFetcher = async () => {
-      setTokenInfoLoading(true);
-      try {
-        const uri = await contract.read.tokenURI([tokenID]);
-        retrieve(uri as string);
-
-        const tokenListedData = await contract.read.nftDetails([tokenID]);
-        console.log(tokenListedData);
-        setTokenListedData(tokenListedData as ListedDetail);
-      } catch (error) {
-        console.log(error);
-        setTokenInfoError(error);
-      }
-
-      setTokenInfoLoading(false);
-    };
-
-    tokenDetailsFetcher();
-  }, [address, tokenID]);
-
-  if (!isConnected || !address || !contract) {
-    return <></>;
+useEffect(() => {
+  if (!connected || !address || !contract) {
+    return;
   }
+  const tokenDetailsFetcher = async () => {
+    setTokenInfoLoading(true);
+    try {
+      const uri = await contract.tokenURI(tokenID);
+      retrieve(uri);
+
+      const tokenListedData = await contract.nftDetails(tokenID);
+      setTokenListedData(tokenListedData);
+    } catch (error) {
+      console.log(error);
+      setTokenInfoError(error);
+    }
+
+    setTokenInfoLoading(false);
+  };
+
+  tokenDetailsFetcher();
+}, [address, tokenID]);
+
+if (!connected || !address || !contract) {
+  return <></>;
+}
 
   if (tokenInfoLoading || tokenMetaData === null) {
     return (
@@ -132,17 +107,17 @@ export default function NFTOwned({ tokenID }: Props) {
       <div className="px-5 pb-5">
         <a href="#">
           <h5 className="text-md font-semibold tracking-tight text-gray-900 dark:text-white">
-            UMN #{tokenID.toString()}
+            UMN #{tokenID.toNumber()}
           </h5>
         </a>
 
         <div className="my-2">
-          {tokenListedData &&
-            
-             (console.log(tokenListedData),
+        {tokenListedData &&
+            tokenListedData.isListed &&
+            tokenListedData.price && (
               <div className="dark:text-white">
-                Listed for {ethers.utils.formatEther(tokenListedData[1])}{" "}
-                $Linea_Testnet
+                Listed for {ethers.utils.formatEther(tokenListedData.price)}{" "}
+                $Linea
               </div>
             )}
         </div>
